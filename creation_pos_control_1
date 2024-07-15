@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=20
+#SBATCH --mem=256GB
+#SBATCH --time=1-12
+#SBATCH --export=ALL
+
+set -e  # Exit immediately if a command exits with a non-zero status
+
+cd /zfs/jacobs/AngelicaVanini/posctrl_db3/preparation_660
+
+# Step 2: Create 660_random_end_only.bed
+awk 'NR==FNR{a[$4]; next} $4 in a' set_1_660.bed 43bp_end_only_with_strand.bed > 660_random_end_only.bed
+
+# Check if the file was created
+if [[ ! -f 660_random_end_only.bed ]]; then
+  echo "Error: 660_random_end_only.bed was not created."
+  exit 1
+fi
+
+# Step 3: Create 660_random_start_only.bed
+awk 'FNR==NR{a[$4]=FNR; next} {print a[$4],$0}' 660_random_end_only.bed set_1_660.bed | sort -n | cut -d' ' -f2- > 660_random_start_only.bed
+
+# Check if the file was created
+if [[ ! -f 660_random_start_only.bed ]]; then
+  echo "Error: 660_random_start_only.bed was not created."
+  exit 1
+fi
+
+# Step 4: Generate fasta sequences for start and end
+bedtools getfasta -fi /zfs/jacobs/genomes/human/hg38/hg38.fa -bed 660_random_start_only.bed -fo 660_start_sequences.fasta -s
+
+bedtools getfasta -fi /zfs/jacobs/genomes/human/hg38/hg38.fa -bed 660_random_end_only.bed -fo 660_end_sequences.fasta -s
+
+# Step 5: Create 660_random_common_names.bed
+awk '{print ">" $4}' 660_random_start_only.bed > 660_random_common_names.bed
+
+awk -F'[>_]' '{for(i=1;i<=NF;i++){if($i=="intron"){print $(i-1); break}}}' 660_random_common_names.bed > 660_random_ENST_ID.txt
