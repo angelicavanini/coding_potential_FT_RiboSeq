@@ -1,0 +1,47 @@
+#!/bin/bash
+
+for i in {1..10}; do
+    bed_file="/zfs/jacobs/AngelicaVanini/posctrl_db3/preparation_717/set_717_${i}_random_common_names_bothID.bed"
+    start_fasta="/zfs/jacobs/AngelicaVanini/posctrl_db3/preparation_717/set_717_${i}_start_sequences.fasta"
+    end_fasta="/zfs/jacobs/AngelicaVanini/posctrl_db3/preparation_717/set_717_${i}_end_sequences.fasta"
+    start_output="set_717_${i}_ID_start_sequences.fasta"
+    end_output="set_717_${i}_ID_end_sequences.fasta"
+
+    awk -v bed_file="$bed_file" '
+    BEGIN {
+        # Read the BED file into an array
+        while ((getline line < bed_file) > 0) {
+            headers[++header_index] = line
+        }
+        close(bed_file)
+        header_index = 1
+    }
+    {
+        if ($0 ~ /^>/) {
+            print headers[header_index]
+            header_index++
+        } else {
+            print $0
+        }
+    }
+    ' "$start_fasta" > "$start_output"
+
+    awk -v bed_file="$bed_file" '
+    BEGIN {
+        # Read the BED file into an array
+        while ((getline line < bed_file) > 0) {
+            headers[++header_index] = line
+        }
+        close(bed_file)
+        header_index = 1
+    }
+    {
+        if ($0 ~ /^>/) {
+            print headers[header_index]
+            header_index++
+        } else {
+            print $0
+        }
+    }
+    ' "$end_fasta" > "$end_output"
+done
