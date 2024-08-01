@@ -52,7 +52,8 @@ subprocess.run([
     "-U", ribo_seq_fastq, 
     "-S", aligned_sam, 
     "-L", "16",  # Seed length = 16
-    "-N", "0"    # Allowing no mismatches in the seed
+    "-N", "0", # Allowing no mismatches in the seed
+    "-a"  # all hits 
 ], check=True)
 
 # Step 1.2: Conversion of SAM files into BAM files, then sorting and indexing of the BAM
