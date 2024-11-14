@@ -230,7 +230,7 @@ def get_reads_to_discard(blastn_file):
             read_pcov[read_name].append(pcov)
 
     for read_name, pcovs in read_pcov.items():
-        if any(pcov >= 90 for pcov in pcovs):
+        if any(pcov >= 100 for pcov in pcovs):
             reads_to_discard.add(read_name)
 
     return reads_to_discard
