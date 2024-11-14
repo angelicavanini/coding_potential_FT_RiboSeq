@@ -24,7 +24,7 @@ def parse_blastn_file(blastn_file):
             coverage = float(columns[4])  # Coverage percentage
             ensg_id = second_col.split('|')[1][4:16]  # Extract ENSG ID
 
-            if coverage >= 90:
+            if coverage >= 100:
                 if read_name not in reads_dict:
                     reads_dict[read_name] = set()
                 reads_dict[read_name].add(ensg_id)
