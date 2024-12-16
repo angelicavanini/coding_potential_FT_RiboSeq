@@ -1,8 +1,8 @@
 #####Investigating Coding Potential of Fusion Transcripts through Ribosomal Profiling Data #####
-####database3_SRR5047771_ 
+####database3_SRR5047771
 
 ################################################################################
-# # Script: FINAL_all_db3.py
+# # Script: FINAL_github_FT.py
 # Description: 
 # Step 1. This script processes a .fastq file containing Ribo-Seq (RS) reads,
 # aligns the reads to the indexed transcripts using Bowtie2, converts SAM to BAM, 
@@ -93,7 +93,7 @@ for transcript, reads in transcript_reads.items():
             f.write(f">{read_id}\n{read_seq}\n")
 
 bamfile.close()
-print("Step 4: Process completed successfully.")
+print("Process completed successfully.")
 
 # Step 1.5: Change headers
 def change_headers(input_file, output_file):
@@ -126,7 +126,7 @@ for input_file in input_files:
     change_headers(input_file, output_file)
     print(f"Processed {input_file} and saved to {output_file}")
 
-# Step 2: Filter for 5bp
+# Step 2: Filter reads to keep only those crossing 5bp upstream and downstream of the midpoint
 def filter_reads(input_file, output_file):
     with open(input_file, 'r') as f_in, open(output_file, 'w') as f_out:
         lines = f_in.readlines()
@@ -187,7 +187,7 @@ for input_file in input_files:
     filter_fasta(input_file, output_file)
     print(f"Processed {input_file} and saved to {output_file}")
 
-# Step 8: Perform blastN
+# Step 8: Perform blastN_FT
 def run_blastn(input_file, output_file, db_path):
     blastn_command = [
         "blastn",
