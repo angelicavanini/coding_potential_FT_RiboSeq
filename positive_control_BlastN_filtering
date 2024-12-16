@@ -8,10 +8,13 @@
 # RS reads matching other known transcripts are discarded. 
 ################################################################################
 
+# Step 4: Process BlastN results and filter out reads mapping to multiple genes
+print("Processing BlastN results...")
+
 import os
 
 def parse_blastn_file(blastn_file):
-    """Parse the BlastN results file to identify reads that map to multiple genes with ≥90% coverage."""
+    """Parse the BlastN results file to identify reads that map to multiple genes with ≥100% coverage."""
     reads_dict = {}
 
     with open(blastn_file, 'r') as f:
@@ -39,6 +42,9 @@ def identify_reads_to_discard(reads_dict):
 def filter_fasta_file(fasta_file, reads_to_discard, output_file):
     """Filter out reads that map to multiple genes from the FASTA file."""
     with open(fasta_file, 'r') as original_file, open(output_file, 'w') as filtered_file:
+        first_line = original_file.readline()
+        filtered_file.write(first_line)  # Write the >ft header
+        
         write_sequence = True
         for line in original_file:
             if line.startswith(">"):
@@ -71,9 +77,10 @@ def process_files(fasta_dir, blastn_results_dir, output_dir):
                 print(f"BlastN results not found for {filename}")
 
 # Define the directories
-fasta_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/changed_headers_only_5bp"
-blastn_results_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/blastn_results"
-output_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/after_blastN"
+fasta_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/changed_headers_only_5bp"
+blastn_results_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/blastn_results"
+output_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/after_blastN_100"
 
 # Process the files
 process_files(fasta_dir, blastn_results_dir, output_dir)
+print("All steps completed successfully.")
