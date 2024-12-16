@@ -1,4 +1,30 @@
+#####Investigating Coding Potential of Fusion Transcripts through Ribosomal Profiling Data #####
+####positive _control for database3_SRR5047771
 
+################################################################################
+# # Script: FINAL_github_posctrl.py
+# Description: 
+# Step 1. This script processes a .fastq file containing Ribo-Seq (RS) reads,
+# aligns the reads to the indexed transcripts using Bowtie2, converts SAM to BAM, 
+# sorts and indexes the BAM files, and extracts reads for each transcript. 
+# The results are saved in separate directories for SAM/BAM files and FASTA 
+# files for each fusion transcript and sample combination.
+# Header names are assigned based on the gene name the RS reads matched to. 
+# Step 2. This script filter out RS reads that are not spanning the fusion 
+# junction of the positive control transcript they matched. 
+# Step 3. All the positive selected RS reads, are screened with BlastN, to find
+# whether they match to multiple transcripts as well or they're uniquely matching
+# the original transcript. 
+# Step 4. This script finally filter out all the RS reads that have matched some
+# other known transcripts in the genome. 
+################################################################################
+
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=5
+#SBATCH --mem=100GB
+#SBATCH --time=7-12
+#SBATCH --export=ALL
 
 import os
 import subprocess
@@ -20,11 +46,11 @@ blastn_results_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/blastn_results"
 after_blastn_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/after_blastN"
 blastn_db_path = "/zfs/jacobs/genomes/human/Genecode_v44/gencode_v44_transcripts_filtered"
 
-# Step 1: Index the transcripts using Bowtie2
+# Step 1.0: BowTie2 Index of the FT
 print("Indexing transcripts...")
 subprocess.run(["bowtie2-build", transcripts_fasta, bowtie2_index_base], check=True)
 
-# Step 2: Align the ribo-seq reads to the indexed transcripts
+# Step 1.1: Alignment of the ribo-seq reads to the indexed transcripts
 print("Aligning reads...")
 subprocess.run([
     "bowtie2", 
@@ -36,30 +62,30 @@ subprocess.run([
     "-a"    #all hits
 ], check=True)
 
-# Step 3: Convert SAM to BAM, sort and index BAM
+# Step 1.2: Conversion of SAM files into BAM files, then sorting and indexing of the BAM
 print("Processing SAM/BAM files...")
 subprocess.run(["samtools", "view", "-bS", aligned_sam, "-o", aligned_bam], check=True)
 subprocess.run(["samtools", "sort", aligned_bam, "-o", sorted_bam], check=True)
 subprocess.run(["samtools", "index", sorted_bam], check=True)
 
-# Load the transcripts
+# To load the transcripts with Seq.io
 print("Loading transcripts...")
 transcripts = {record.id: str(record.seq) for record in SeqIO.parse(transcripts_fasta, "fasta")}
 
-# Open the sorted BAM file
+# The last sorted BAM file neeeds to be open 
 bamfile = pysam.AlignmentFile(sorted_bam, "rb")
 
 # Dictionary to store reads for each transcript
 transcript_reads = {transcript: [] for transcript in transcripts}
 
-# Step 4: Extract reads for each transcript
+# Step 1.3: Extract reads for each transcript
 print("Extracting reads for each transcript...")
 for read in bamfile.fetch():
     if not read.is_unmapped:
         transcript = bamfile.get_reference_name(read.reference_id)
         transcript_reads[transcript].append(read)
 
-# Step 5: Write each transcript and its reads to a separate FASTA file
+# Step 1.4: Write each transcript and its reads to a separate FASTA file
 print("Writing FASTA files...")
 for transcript, reads in transcript_reads.items():
     with open(f"{transcript}_reads.fasta", "w") as f:
@@ -75,7 +101,7 @@ for transcript, reads in transcript_reads.items():
 bamfile.close()
 print("Process completed successfully.")
 
-# Step 6: Change headers of the FASTA files
+# Step 1.5: Change headers
 print("Changing headers...")
 os.makedirs(changed_headers_dir, exist_ok=True)
 
@@ -105,7 +131,7 @@ for input_file in input_files:
     change_headers(input_file, output_file)
     print(f"Processed {input_file} and saved to {output_file}")
 
-# Step 7: Filter reads to keep only those crossing 5bp upstream and downstream of the midpoint
+# Step 2: Filter reads to keep only those crossing 5bp upstream and downstream of the midpoint
 print("Filtering reads...")
 os.makedirs(filtered_reads_dir, exist_ok=True)
 
@@ -138,7 +164,7 @@ for input_file in input_files:
     filter_reads(input_file, output_file)
     print(f"Processed {input_file} and saved to {output_file}")
 
-# Step 8: Remove FT sequences from the FASTA files
+# Step 3: Filter for only rs for blastn
 print("Removing FT sequences...")
 os.makedirs(final_filtered_dir, exist_ok=True)
 
@@ -161,7 +187,7 @@ for input_file in input_files:
     filter_fasta(input_file, output_file)
     print(f"Processed {input_file} and saved to {output_file}")
 
-# Step 9: Run BlastN on the filtered files
+# Step 8: Perform blastN_posctrl
 print("Running BlastN...")
 os.makedirs(blastn_results_dir, exist_ok=True)
 
@@ -185,7 +211,7 @@ for input_file in input_files:
 
 import os  # Import the os module to handle file paths and directories
 
-# Step 10: Process BlastN results and filter out reads mapping to multiple genes
+# Step 4: Process BlastN results and filter out reads mapping to multiple genes
 print("Processing BlastN results...")
 
 def parse_blastn_file(blastn_file):
