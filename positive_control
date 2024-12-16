@@ -183,12 +183,13 @@ for input_file in input_files:
     run_blastn(input_file, output_file, blastn_db_path)
     print(f"Processed {input_file} and saved to {output_file}")
 
+import os  # Import the os module to handle file paths and directories
+
 # Step 10: Process BlastN results and filter out reads mapping to multiple genes
 print("Processing BlastN results...")
-os.makedirs(after_blastn_dir, exist_ok=True)
 
 def parse_blastn_file(blastn_file):
-    """Parse the BlastN results file to identify reads that map to multiple genes with ≥90% coverage."""
+    """Parse the BlastN results file to identify reads that map to multiple genes with ≥100% coverage."""
     reads_dict = {}
 
     with open(blastn_file, 'r') as f:
@@ -201,7 +202,7 @@ def parse_blastn_file(blastn_file):
             coverage = float(columns[4])  # Coverage percentage
             ensg_id = second_col.split('|')[1][4:16]  # Extract ENSG ID
 
-            if coverage >= 90:
+            if coverage >= 100:
                 if read_name not in reads_dict:
                     reads_dict[read_name] = set()
                 reads_dict[read_name].add(ensg_id)
@@ -251,9 +252,9 @@ def process_files(fasta_dir, blastn_results_dir, output_dir):
                 print(f"BlastN results not found for {filename}")
 
 # Define the directories
-fasta_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/changed_headers_only_5bp"
-blastn_results_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/blastn_results"
-output_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/after_blastN"
+fasta_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/changed_headers_only_5bp"
+blastn_results_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/blastn_results"
+output_dir = "/zfs/jacobs/AngelicaVanini/posctrl_db3/set1/after_blastN_100"
 
 # Process the files
 process_files(fasta_dir, blastn_results_dir, output_dir)
